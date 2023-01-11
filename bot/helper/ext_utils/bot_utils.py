@@ -10,8 +10,8 @@ from psutil import cpu_percent, disk_usage, virtual_memory
 from requests import request
 
 from bot import (BUTTON_NAMES, BUTTON_URLS, CATEGORY_NAMES, DOWNLOAD_DIR,
-                 botStartTime, btn_listener, config_dict, download_dict,
-                 download_dict_lock, user_data)
+                 botStartTime, config_dict, download_dict, download_dict_lock,
+                 user_data)
 from bot.helper.telegram_helper.bot_commands import BotCommands
 from bot.helper.telegram_helper.button_build import ButtonMaker
 
@@ -248,10 +248,6 @@ def check_user_tasks(user_id, maxtask):
     if tasks:= getAllDownload(MirrorStatus.STATUS_DOWNLOADING, user_id, False):
         return len(tasks) >= maxtask
 
-def check_buttons():
-    if len(btn_listener) >= 3:
-        return 'Sorry, I can only handle 3 tasks at a time.'
-
 def get_readable_time(seconds: int) -> str:
     result = ''
     (days, remainder) = divmod(seconds, 86400)
@@ -350,7 +346,7 @@ def set_commands(bot):
         (f'{BotCommands.BtSelectCommand}', 'Select files to download only torrents'),
         (f'{BotCommands.CategorySelect}', 'Select category to upload only mirror'),
         (f'{BotCommands.CancelMirror}', 'Cancel a Task'),
-        (f'{BotCommands.CancelAllCommand}', 'Cancel all tasks which added by you'),
+        (f'{BotCommands.CancelAllCommand[0]}', f'Cancel all tasks which added by you or {BotCommands.CancelAllCommand[1]} to in bots.'),
         (f'{BotCommands.ListCommand}', 'Search in Drive'),
         (f'{BotCommands.SearchCommand}', 'Search in Torrent'),
         (f'{BotCommands.UserSetCommand}', 'Users settings'),

@@ -120,6 +120,10 @@ def load_config():
     if len(RSS_COMMAND) == 0:
         RSS_COMMAND = ''
 
+    LEECH_FILENAME_PREFIX = environ.get('LEECH_FILENAME_PREFIX', '')
+    if len(LEECH_FILENAME_PREFIX) == 0:
+        LEECH_FILENAME_PREFIX = ''
+
     SEARCH_PLUGINS = environ.get('SEARCH_PLUGINS', '')
     if len(SEARCH_PLUGINS) == 0:
         SEARCH_PLUGINS = ''
@@ -315,8 +319,8 @@ def load_config():
     SET_COMMANDS = environ.get('SET_COMMANDS', '')
     SET_COMMANDS = SET_COMMANDS.lower() == 'true'
 
-    ENABLE_DM = environ.get('ENABLE_DM', '')
-    ENABLE_DM = ENABLE_DM.lower() == 'true'
+    DM_MODE = environ.get('DM_MODE', '')
+    DM_MODE = DM_MODE.lower() if DM_MODE.lower() in ['leech', 'mirror', 'all'] else ''
 
     DELETE_LINKS = environ.get('DELETE_LINKS', '')
     DELETE_LINKS = DELETE_LINKS.lower() == 'true'
@@ -385,6 +389,7 @@ def load_config():
                    'INCOMPLETE_TASK_NOTIFIER': INCOMPLETE_TASK_NOTIFIER,
                    'INDEX_URL': INDEX_URL,
                    'IS_TEAM_DRIVE': IS_TEAM_DRIVE,
+                   'LEECH_FILENAME_PREFIX': LEECH_FILENAME_PREFIX,
                    'LEECH_SPLIT_SIZE': LEECH_SPLIT_SIZE,
                    'MEDIA_GROUP': MEDIA_GROUP,
                    'MEGA_API_KEY': MEGA_API_KEY,
@@ -433,7 +438,7 @@ def load_config():
                    'DISABLE_DRIVE_LINK': DISABLE_DRIVE_LINK,
                    'SET_COMMANDS': SET_COMMANDS,
                    'DISABLE_LEECH': DISABLE_LEECH,
-                   'ENABLE_DM': ENABLE_DM,
+                   'DM_MODE': DM_MODE,
                    'DELETE_LINKS': DELETE_LINKS})
 
     if DATABASE_URL:
@@ -493,11 +498,16 @@ def get_buttons(key=None, edit_type=None):
             buttons.sbutton(int(x/10), f"botset start qbit {x}", position='footer')
         msg = f'Qbittorrent Options | Page: {int(START/10)} | State: {STATE}'
     elif edit_type == 'editvar':
+        msg = ''
         buttons.sbutton('Back', "botset back var")
         if key not in ['TELEGRAM_HASH', 'TELEGRAM_API', 'OWNER_ID', 'BOT_TOKEN']:
             buttons.sbutton('Default', f"botset resetvar {key}")
         buttons.sbutton('Close', "botset close")
-        msg = f'Send a valid value for {key}. Timeout: 60 sec'
+        if key in ['SUDO_USERS', 'RSS_USER_SESSION_STRING', 'IGNORE_PENDING_REQUESTS', 'CMD_SUFFIX', 'OWNER_ID',
+                   'USER_SESSION_STRING', 'TELEGRAM_HASH', 'TELEGRAM_API', 'AUTHORIZED_CHATS', 'RSS_DELAY'
+                   'DATABASE_URL', 'BOT_TOKEN', 'DOWNLOAD_DIR']:
+            msg += 'Restart required for this edit to take effect!\n\n'
+        msg += f'Send a valid value for {key}. Timeout: 60 sec'
     elif edit_type == 'editaria':
         buttons.sbutton('Back', "botset back aria")
         if key != 'newkey':
@@ -582,6 +592,8 @@ def edit_variable(update, context, omsg, key):
             CATEGORY_INDEXS[0] = value
         else:
             CATEGORY_INDEXS.insert(0, value)
+    elif key == 'DM_MODE':
+        value = value.lower() if value.lower() in ['leech', 'mirror', 'all'] else ''
     elif key not in ['SEARCH_LIMIT', 'STATUS_LIMIT'] and key.endswith(('_THRESHOLD', '_LIMIT')):
         value = float(value)
     elif value.isdigit() and key != 'FSUB_IDS':
@@ -914,12 +926,7 @@ def edit_bot_settings(update, context):
                 update_buttons(message)
         dispatcher.remove_handler(file_handler)
     elif data[1] == 'editvar' and STATE == 'edit':
-        if data[2] in ['SUDO_USERS', 'RSS_USER_SESSION_STRING', 'IGNORE_PENDING_REQUESTS', 'CMD_SUFFIX', 'OWNER_ID',
-                       'USER_SESSION_STRING', 'TELEGRAM_HASH', 'TELEGRAM_API', 'AUTHORIZED_CHATS', 'RSS_DELAY'
-                       'DATABASE_URL', 'BOT_TOKEN', 'DOWNLOAD_DIR']:
-            query.answer(text='Restart required for this edit to take effect!', show_alert=True)
-        else:
-            query.answer()
+        query.answer()
         if handler_dict.get(message.chat.id):
             handler_dict[message.chat.id] = False
             sleep(0.5)
@@ -939,10 +946,8 @@ def edit_bot_settings(update, context):
         value = config_dict[data[2]]
         if len(str(value)) > 200:
             query.answer()
-            filename = f"{data[2]}.txt"
-            with open(filename, 'w', encoding='utf-8') as f:
-                f.write(f'{value}')
-            sendFile(context.bot, message, filename)
+            fileName = f"{data[2]}.txt"
+            sendFile(context.bot, message, value, fileName, data[2])
             return
         elif value and data[2] not in ['SEARCH_LIMIT', 'STATUS_LIMIT'] and data[2].endswith(('_THRESHOLD', '_LIMIT')):
             value = float(value)

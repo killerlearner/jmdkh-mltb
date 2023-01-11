@@ -26,7 +26,7 @@ In each single file there is a major change from base code, it's almost totaly d
 - 4GB file upload with premium account also available in DM feature
 - Upload all files to specific superGroup/channel.
 - Leech Split size and equal split size settings for each user
-- Ability to upload documents and videos parts in media group. Setting for each user
+- Ability to leech splitted file parts in media group. Setting for each user
 ### Google
 - Stop duplicates for all tasks except yt-dlp tasks
 - Download from Google Drive
@@ -74,13 +74,14 @@ In each single file there is a major change from base code, it's almost totaly d
 - Docker image support for linux `amd64, arm64/v8, arm/v7, s390x`
 - Edit variables and overwrite the private files while bot running
 - Update bot at startup and with restart command using `UPSTREAM_REPO`
-- Improve Telegraph. Based on [Sreeraj](https://github.com/SVR666) loaderX-bot.
+- Improve Telegraph. Based on [Sreeraj](https://github.com/SVR666) loaderX-bot
 - Mirror/Leech/Watch/Clone/Count/Del by reply
 - Mirror/Leech/Clone multi links/files with one command
 - Custom name for all links except torrents. For files you should add extension except yt-dlp links
 - Extensions Filter for the files to be uploaded/cloned
 - View Link button. Extra button to open index link in broswer instead of direct download for file
 - Queueing System
+- Ability to zip/unzip multi links in same directory. Mostly helpful in unziping tg file parts
 - Almost all repository functions have been improved and many other details can't mention all of them
 - Many bugs have been fixed
 
@@ -212,7 +213,7 @@ Fill up rest of the fields. Meaning of each field is discussed below. **NOTE**: 
 - `LEECH_SPLIT_SIZE`: Size of split in bytes. Default is `2GB`. Default is `4GB` if your account is premium. `Int`
 - `AS_DOCUMENT`: Default type of Telegram file upload. Default is `False` mean as media. `Bool`
 - `EQUAL_SPLITS`: Split files larger than **LEECH_SPLIT_SIZE** into equal parts size (Not working with zip cmd). Default is `False`. `Bool`
-- `MEDIA_GROUP`: View Uploaded parts of videos or documents in media group. Default is `False`. `Bool`
+- `MEDIA_GROUP`: View Uploaded splitted file parts in media group. Default is `False`. `Bool`.
 - `LEECH_FILENAME_PREFIX`: Add custom word to leeched file name. `Str`
 - `DUMP_CHAT`: Chat ID. Upload files to specific chat. `str`. **NOTE**: Only available for superGroup/channel. Add `-100` before channel/superGroup id. In short don't add bot id or your id!
 - `USER_SESSION_STRING`: To download/upload from your telegram account. If you own premium account. To generate session string use this command `python3 generate_string_session.py` after mounting repo folder for sure. `Str`. **NOTE**: You can't use bot with private message. Use it with superGroup.
@@ -225,7 +226,7 @@ Fill up rest of the fields. Meaning of each field is discussed below. **NOTE**: 
 
 ### RSS
 - `RSS_DELAY`: Time in seconds for rss refresh interval. Recommended `900` second at least. Default is `900` in sec. `Int`
-- `RSS_COMMAND`: Choose command for the desired action. `Str`
+- `RSS_COMMAND`: Choose command for the desired action. `Str`. **NOTE**: Don't add `/` at the beginning.
 - `RSS_CHAT_ID`: Chat ID where rss links will be sent. If using channel then add channel id. Add `-100` before channel id. `Int`
 - `RSS_USER_SESSION_STRING`: To send rss links from your telegram account. Instead of adding bot to channel then linking the channel to group to get rss link since bot will not read command from itself or other bot. To generate session string use this command `python3 generate_string_session.py` after mounting repo folder for sure. `Str`. **NOTE**: Don't use same session string as `USER_SESSION_STRING`.
   - **RSS NOTE**: `DATABASE_URL` and `RSS_CHAT_ID` is required, otherwise all rss commands will not work. You must use bot in group. You can add the bot to a channel and link this channel to group so messages sent by bot to channel will be forwarded to group without using `RSS_USER_STRING_SESSION`.
@@ -277,7 +278,8 @@ Fill up rest of the fields. Meaning of each field is discussed below. **NOTE**: 
 - `SET_COMMANDS`: To set bot commands automatically on every startup. Default is `False`. `Bool`
   - **Note**: You can set commands manually according to your needs few commands are available [here](#bot-commands-to-be-set-in-botfatherhttpstmebotfather)
 - `DISABLE_LEECH`: It will disable leech functionality. Default is `False`. `Bool`
-- `ENABLE_DM`: If enabled then bot will send Mirrored/Leeched files in user's DM. Default is `False`. `Bool`
+- `DM_MODE`: If then bot will send Mirrored/Leeched files in user's DM. Default is `off`. `Str`
+  - **Note**: if value is `Mirror` it will send only mirrored files in DM. if value is `Leech` so it will send leeched files in DM. if value is `all` it will send Mirrored/Leeched files in DM
 - `DELETE_LINKS`: It will delete links on download start. Default is `False`. `Bool`
 - `LOG_CHAT`: Fill chat_id of the group/channel. It will send mirror/clone links in the log chat. `Int`
   - **Note**: Bot should be added in the log chat as admin.
@@ -427,7 +429,7 @@ python3 gen_sa_accounts.py --download-keys $PROJECTID
 ```
 >**NOTE:** 1 Service Account can upload/copy around 750 GB a day, 1 project can make 100 Service Accounts so you can upload 75 TB a day.
 
->**NOTE:** All people can copy `2TB/DAY` from each file creator (uploader account), so if you got error `userRateLimitExceeded` that doesn't your limit exceeded but but file creator limit have been exceeded which is `2TB/DAY`.
+>**NOTE:** All people can copy `2TB/DAY` from each file creator (uploader account), so if you got error `userRateLimitExceeded` that doesn't mean your limit exceeded but file creator limit have been exceeded which is `2TB/DAY`.
 
 #### Two methods to create service accounts
 Choose one of these methods
@@ -543,7 +545,7 @@ urlshortx.com 91fc872f9882144c27eecdc22d16f7369766f297
 ouo.io LYT0zBn1
 ```
 - Supported URL Shorteners:
->exe.io, gplinks.in, shrinkme.io, urlshortx.com, shortzon.com, bit.ly, shorte.st, linkvertise.com , ouo.io, adfoc.us, cutt.ly
+>exe.io, gplinks.in, shrinkme.io, urlshortx.com, shortzon.com, bit.ly, shorte.st, linkvertise.com, ouo.io, cutt.ly
 -----
 ### Extra Buttons
 - Four buttons are already added, Drive Link, Index Link and View Link, You can add up to four extra buttons if you don't know what are the below entries.

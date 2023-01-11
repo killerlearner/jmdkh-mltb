@@ -218,6 +218,10 @@ RSS_COMMAND = environ.get('RSS_COMMAND', '')
 if len(RSS_COMMAND) == 0:
     RSS_COMMAND = ''
 
+LEECH_FILENAME_PREFIX = environ.get('LEECH_FILENAME_PREFIX', '')
+if len(LEECH_FILENAME_PREFIX) == 0:
+    LEECH_FILENAME_PREFIX = ''
+
 SEARCH_PLUGINS = environ.get('SEARCH_PLUGINS', '')
 if len(SEARCH_PLUGINS) == 0:
     SEARCH_PLUGINS = ''
@@ -375,8 +379,8 @@ DISABLE_LEECH = DISABLE_LEECH.lower() == 'true'
 SET_COMMANDS = environ.get('SET_COMMANDS', '')
 SET_COMMANDS = SET_COMMANDS.lower() == 'true'
 
-ENABLE_DM = environ.get('ENABLE_DM', '')
-ENABLE_DM = ENABLE_DM.lower() == 'true'
+DM_MODE = environ.get('DM_MODE', '')
+DM_MODE = DM_MODE.lower() if DM_MODE.lower() in ['leech', 'mirror', 'all'] else ''
 
 DELETE_LINKS = environ.get('DELETE_LINKS', '')
 DELETE_LINKS = DELETE_LINKS.lower() == 'true'
@@ -403,6 +407,7 @@ config_dict = {'AS_DOCUMENT': AS_DOCUMENT,
                 'INCOMPLETE_TASK_NOTIFIER': INCOMPLETE_TASK_NOTIFIER,
                 'INDEX_URL': INDEX_URL,
                 'IS_TEAM_DRIVE': IS_TEAM_DRIVE,
+                'LEECH_FILENAME_PREFIX': LEECH_FILENAME_PREFIX,
                 'LEECH_SPLIT_SIZE': LEECH_SPLIT_SIZE,
                 'MEDIA_GROUP': MEDIA_GROUP,
                 'MEGA_API_KEY': MEGA_API_KEY,
@@ -451,7 +456,7 @@ config_dict = {'AS_DOCUMENT': AS_DOCUMENT,
                 'DISABLE_DRIVE_LINK': DISABLE_DRIVE_LINK,
                 'SET_COMMANDS': SET_COMMANDS,
                 'DISABLE_LEECH': DISABLE_LEECH,
-                'ENABLE_DM': ENABLE_DM,
+                'DM_MODE': DM_MODE,
                 'DELETE_LINKS': DELETE_LINKS}
 
 if GDRIVE_ID:

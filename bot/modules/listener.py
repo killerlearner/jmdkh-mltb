@@ -1,6 +1,7 @@
 from html import escape
-from os import listdir, path, remove, walk
+from os import listdir, makedirs, path, remove, rename, walk
 from re import search
+from shutil import move
 from subprocess import Popen
 from time import sleep, time
 
@@ -37,7 +38,7 @@ from bot.helper.telegram_helper.message_utils import (delete_all_messages,
 
 class MirrorLeechListener:
     def __init__(self, bot, message, isZip=False, extract=False, isQbit=False,
-                isLeech=False, pswd=None, tag=None, select=False, seed=False,
+                isLeech=False, pswd=None, tag=None, select=False, seed=False, sameDir={},
                 raw_url=None, c_index=0, dmMessage=None, logMessage=None):
         self.bot = bot
         self.message = message
@@ -59,6 +60,7 @@ class MirrorLeechListener:
         self.dmMessage = dmMessage
         self.logMessage = logMessage
         self.queuedUp = False
+        self.sameDir = sameDir
 
     def clean(self):
         try:
@@ -96,19 +98,31 @@ class MirrorLeechListener:
 
     def onDownloadComplete(self):
         with download_dict_lock:
+            if len(self.sameDir) > 1:
+                self.sameDir.remove(self.uid)
+                folder_name = listdir(self.dir)[-1]
+                des_path = f"{DOWNLOAD_DIR}{list(self.sameDir)[0]}/{folder_name}"
+                makedirs(des_path, exist_ok=True)
+                for subdir in listdir(f"{self.dir}/{folder_name}"):
+                    sub_path = f"{self.dir}/{folder_name}/{subdir}"
+                    if subdir in listdir(des_path):
+                        sub_path = rename(sub_path, f"{self.dir}/{folder_name}/1-{subdir}")
+                    move(sub_path, des_path)
+                del download_dict[self.uid]
+                return
             download = download_dict[self.uid]
             name = str(download.name()).replace('/', '')
             gid = download.gid()
         LOGGER.info(f"Download completed: {name}")
         if name == "None" or self.isQbit or not path.exists(f"{self.dir}/{name}"):
             name = listdir(self.dir)[-1]
-        m_path = f'{self.dir}/{name}'
+        m_path = f"{self.dir}/{name}"
         size = get_path_size(m_path)
         with queue_dict_lock:
             if self.uid in non_queued_dl:
                 non_queued_dl.remove(self.uid)
         start_from_queued()
-        user_dict = user_data.get(self.message.from_user.id, False)
+        user_dict = user_data.get(self.message.from_user.id, {})
         if self.isZip:
             if self.seed and self.isLeech:
                 self.newDir = f"{self.dir}10000"
@@ -117,7 +131,7 @@ class MirrorLeechListener:
                 path_ = f"{m_path}.zip"
             with download_dict_lock:
                 download_dict[self.uid] = ZipStatus(name, size, gid, self)
-            LEECH_SPLIT_SIZE = user_dict and user_dict.get('split_size') or config_dict['LEECH_SPLIT_SIZE']
+            LEECH_SPLIT_SIZE = user_dict.get('split_size', False) or config_dict['LEECH_SPLIT_SIZE']
             if self.pswd:
                 if self.isLeech and int(size) > LEECH_SPLIT_SIZE:
                     LOGGER.info(f'Zip: orig_path: {m_path}, zip_path: {path_}.0*')
@@ -206,8 +220,8 @@ class MirrorLeechListener:
             o_files = []
             if not self.isZip:
                 checked = False
-                LEECH_SPLIT_SIZE = user_dict and user_dict.get('split_size') or config_dict['LEECH_SPLIT_SIZE']
-                for dirpath, _, files in walk(up_dir, topdown=False):
+                LEECH_SPLIT_SIZE = user_dict.get('split_size', False) or config_dict['LEECH_SPLIT_SIZE']
+                for dirpath, subdir, files in walk(up_dir, topdown=False):
                     for file_ in files:
                         f_path = path.join(dirpath, file_)
                         f_size = path.getsize(f_path)
@@ -295,7 +309,9 @@ class MirrorLeechListener:
             msg += f"\n<b>Upload</b>: {self.mode}\n\n"
             if not files:
                 sendMessage(msg, self.bot, self.message)
-            elif self.dmMessage:
+                if self.logMessage:
+                    sendMessage(msg, self.bot, self.logMessage)
+            elif self.dmMessage and not config_dict['DUMP_CHAT']:
                 sendMessage(msg, self.bot, self.dmMessage)
                 msg += '<b>Files has been sent in your DM.</b>'
                 sendMessage(msg, self.bot, self.message)
@@ -400,9 +416,13 @@ class MirrorLeechListener:
             if self.uid in download_dict:
                 del download_dict[self.uid]
             count = len(download_dict)
+            if self.uid in self.sameDir:
+                self.sameDir.remove(self.uid)
         if msg:
             msg += f"\n<b>Upload</b>: {self.mode}"
             sendMessage(msg, self.bot, self.message, button)
+            if self.logMessage:
+                sendMessage(msg, self.bot, self.logMessage, button)
         if count == 0:
             self.clean()
         else:
